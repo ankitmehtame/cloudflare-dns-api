@@ -1,14 +1,11 @@
 using CloudflareDnsApi;
-using CloudflareDnsApi.Errors;
 using CloudflareDnsApi.Models;
 using CloudflareDnsApi.Services;
-using Microsoft.AspNetCore.Builder;
-using OneOf;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpClient();
-builder.Services.AddScoped<CloudflareService>();
+builder.Services.AddSingleton<CloudflareService>();
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -95,7 +92,16 @@ app.MapGet("/api/dns/{name}", async (string name, CloudflareService cloudflareSe
 .WithName("GetDnsRecord")
 .WithOpenApi();
 
-var logger = app.Services.GetService<ILogger<Program>>();
-logger?.LogInformation("Info version is {InfoVersion}", VersionUtils.InfoVersion);
+var logger = app.Services.GetService<ILogger<Program>>() ?? throw new InvalidOperationException("Logger is not found");
+logger.LogInformation("Info version is {InfoVersion}", VersionUtils.InfoVersion);
 
-app.Run();
+try
+{
+    app.Services.GetRequiredService<CloudflareService>();
+    app.Run();
+}
+catch (InvalidOperationException ex)
+{
+    logger.LogError(ex.Message);
+    logger.LogInformation("Exiting...");
+}

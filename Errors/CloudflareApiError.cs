@@ -1,4 +1,3 @@
-namespace CloudflareDnsApi.Errors
-{
-    public record class CloudflareApiError(int StatusCode, string Message);
-}
+namespace CloudflareDnsApi.Errors;
+
+public record class CloudflareApiError(int StatusCode, string Message);

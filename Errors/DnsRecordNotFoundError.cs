@@ -1,4 +1,2 @@
-namespace CloudflareDnsApi.Errors
-{
-    public record class DnsRecordNotFoundError(string RecordName);
-}
+namespace CloudflareDnsApi.Errors;
+public record class DnsRecordNotFoundError(string RecordName);

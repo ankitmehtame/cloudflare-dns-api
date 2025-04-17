@@ -21,14 +21,14 @@ public class CloudflareService
     {
         _logger = logger;
         _httpClient = httpClientFactory.CreateClient();
-        _apiToken = Environment.GetEnvironmentVariable(API_TOKEN_KEY) ?? throw new InvalidOperationException($"Missing property {API_TOKEN_KEY}");
-        _zoneId = Environment.GetEnvironmentVariable("CLOUDFLARE_ZONE_ID") ?? throw new InvalidOperationException($"Missing property {ZONE_ID_KEY}");
+        _apiToken = Environment.GetEnvironmentVariable(API_TOKEN_KEY) ?? string.Empty;
+        _zoneId = Environment.GetEnvironmentVariable(ZONE_ID_KEY) ?? string.Empty;
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         if (string.IsNullOrEmpty(_apiToken) || string.IsNullOrEmpty(_zoneId))
         {
-            throw new InvalidOperationException("Cloudflare API token or Zone ID environment variable is not set.");
+            throw new InvalidOperationException($"Cloudflare API token ({API_TOKEN_KEY}) and/or Zone ID ({ZONE_ID_KEY}) environment variable is not set.");
         }
     }
 
