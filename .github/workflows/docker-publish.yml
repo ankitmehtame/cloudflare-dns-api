@@ -1,37 +1,78 @@
 name: Docker Publish
 
 on:
-  push:
-    branches: [ "main" ]
+    push:
+      branches:
+        - "**"
+    pull_request:
+      branches: [ main ]
+    schedule:
+      - cron: '15 4 1 * *'
+    workflow_dispatch:
+
+env:
+  IMAGE_NAME: cloudflare-dns-api
 
 jobs:
-  build-and-push:
+
+  build:
+
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 9.0.x
+    - uses: dotnet/nbgv@master
+      with:
+        setAllVars: true
+      id: nbgv
 
-      - name: Build
-        run: dotnet build --configuration Release
+    - name: Versioning - Update projects
+      run: |
+        echo ${{ steps.nbgv.outputs.SemVer2 }}
+        echo "Installing tool dotnet-setversion"
+        dotnet tool install -g dotnet-setversion
+        echo "Setting version for projects"
+        setversion --recursive ${{ steps.nbgv.outputs.SemVer2 }}
 
-      - name: Publish
-        run: dotnet publish -c Release -o publish
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+        
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v3
+      with:
+        # list of Docker images to use as base name for tags
+        images: |
+          ${{ secrets.DOCKER_USER }}/${{ env.IMAGE_NAME }}
+        # Docker tags based on the following events/attributes
+        tags: |
+          type=semver,pattern={{version}},priority=900,prefix=,suffix=.${{ github.run_number }},enable=${{ github.ref == 'refs/heads/master' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
+          type=semver,pattern={{version}},priority=900,prefix=rc-,suffix=.${{ github.run_number }},enable=${{ github.ref != 'refs/heads/master' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
+          type=semver,pattern={{major}}.{{minor}},priority=825,prefix=,suffix=,enable=${{ github.ref == 'refs/heads/master' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
+          type=semver,pattern={{major}}.{{minor}},priority=825,prefix=rc-,suffix=,enable=${{ github.ref != 'refs/heads/master' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+        flavor: |
+          latest=false
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+    - name: Log into registry
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+      if: ${{ github.event_name != 'pull_request' }}
 
-      - name: Build and push Docker image (Multi-Arch)
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          IMAGE_NAME: your-dockerhub-username/cloudflare-dns-api # Replace with your Docker Hub username and image name
-        run: |
-          docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
-          docker buildx build --platform linux/amd64,linux/arm64 -t $IMAGE_NAME:latest --push -f Dockerfile .
-          git tag -a v${{ github.run_number }} -m "Multi-arch Docker image release v${{ github.run_number }}"
-          git push origin v${{ github.run_number }}
+    - name: Build and push
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        file: Dockerfile
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}

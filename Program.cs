@@ -1,3 +1,4 @@
+using CloudflareDnsApi;
 using CloudflareDnsApi.Errors;
 using CloudflareDnsApi.Models;
 using CloudflareDnsApi.Services;
@@ -18,8 +19,8 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
         Title = "Cloudflare DNS API",
-        Version = "v1",
-        Description = "A simple API to manage Cloudflare DNS entries.",
+        Version = VersionUtils.AssemblyVersion,
+        Description = $"v{VersionUtils.InfoVersion} A simple API to manage Cloudflare DNS entries.",
         Contact = new Microsoft.OpenApi.Models.OpenApiContact
         {
             Name = "Ankit",
@@ -81,6 +82,9 @@ app.MapGet("/api/dns/{name}", async (string name, CloudflareService cloudflareSe
     );
 })
 .WithName("GetDnsRecord")
-.WithOpenApi(); ;
+.WithOpenApi();
+
+var logger = app.Services.GetService<ILogger<Program>>();
+logger?.LogInformation("Info version is {InfoVersion}", VersionUtils.InfoVersion);
 
 app.Run();
