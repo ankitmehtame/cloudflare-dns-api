@@ -1,0 +1,116 @@
+# Compiled output
+/bin
+/obj
+
+# NuGet related files
+packages/
+*.nupkg
+*.snupkg
+# NuGet.Config, but exclude the 'config' folder if you have specific configuration there
+!config/NuGet.Config
+NuGet.Config
+
+# Visual Studio files
+.vs/
+*.suo
+*.user
+*.sln.docstates
+*.vssscc
+*.vsdpscc
+*.vcproj.user
+*.vcxproj.user
+*.vcxproj.user.*
+*.vcxproj.filters
+*.vcxproj.filters.*
+*.vcxproj.props
+*.vcxproj.props.*
+*.cachefile
+*.ide
+*.vspscc
+*.build.gml
+*.tlog
+*.lastbuildstate
+*.opendialogsave
+*.FileListAbsolute.txt
+*.psess
+*.pstats
+*.vsmdi
+*.testsettings
+*.runsettings
+*.editorconfig.user
+
+# Visual Studio Code files
+.vscode/
+*.code-workspace
+
+# Build results
+/publish
+
+# Test results
+/TestResults
+/*.trx
+/*.coverage
+/*.coveragexml
+/*.dta
+/*.vsix
+/*.vsixmanifest
+/nunit.xml
+/TestProject.TestResults.xml
+
+# Package Manager Console History
+*.pshistory
+
+# Rider
+.idea/
+*.iml
+
+# Docker related
+docker-compose*.yml
+.dockerignore
+
+# Environment specific files
+*.env
+*.ini
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+*.swp
+*.vsixlangpack
+
+# Other user specific files
+*.userprefs
+
+# ASP.NET Core files
+/wwwroot/lib/
+/wwwroot/temp/
+/bundleconfig.json
+/project.lock.json
+# /Properties/launchSettings.json
+/Properties/PublishProfiles/
+
+# SQL Server LocalDB
+*.mdf
+*.ldf
+
+# IIS Express
+iisexpress/
+
+# JetBrains products
+.resharper.user*
+
+# Azure related
+/obj/Release/net*publish/
+
+# Node.js dependencies (if you have a frontend)
+node_modules/
+
+# Yarn related (if you have a frontend)
+yarn.lock
+
+# Bower components (if you have a frontend)
+bower_components/
+
+# Global tool caches
+.nuget/packages/
