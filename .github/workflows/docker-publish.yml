@@ -1,31 +1,28 @@
 name: Docker Publish
 
 on:
-    push:
-      branches:
-        - "**"
-    pull_request:
-      branches: [ main ]
-    schedule:
-      - cron: '15 4 1 * *'
-    workflow_dispatch:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '15 4 1 * *'
+  workflow_dispatch:
 
 env:
   IMAGE_NAME: cloudflare-dns-api
   GITHUB_REGISTRY: ghcr.io
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
 
-    - uses: dotnet/nbgv@master
+    - uses: dotnet/nbgv@v3.3.3 # Use a specific stable version
       with:
         setAllVars: true
       id: nbgv
@@ -36,33 +33,31 @@ jobs:
         echo "Installing tool dotnet-setversion"
         dotnet tool install -g dotnet-setversion
         echo "Setting version for projects"
-        setversion --recursive ${{ steps.nbgv.outputs.SemVer2 }}
+        dotnet tool run setversion --recursive ${{ steps.nbgv.outputs.SemVer2 }}
 
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
+      uses: docker/setup-qemu-action@v3 # Use a specific stable version
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-        
+      uses: docker/setup-buildx-action@v3 # Use a specific stable version
+
     - name: Docker meta
       id: meta
-      uses: docker/metadata-action@v3
+      uses: docker/metadata-action@v5 # Use a specific stable version
       with:
-        # list of Docker images to use as base name for tags
         images: |
-          ${{ secrets.DOCKER_USER }}/${{ env.IMAGE_NAME }}
-        # Docker tags based on the following events/attributes
+          ${{ env.GITHUB_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
         tags: |
-          type=semver,pattern={{version}},priority=900,prefix=,suffix=.${{ github.run_number }},enable=${{ github.ref == 'refs/heads/master' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
-          type=semver,pattern={{version}},priority=900,prefix=rc-,suffix=.${{ github.run_number }},enable=${{ github.ref != 'refs/heads/master' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
-          type=semver,pattern={{major}}.{{minor}},priority=825,prefix=,suffix=,enable=${{ github.ref == 'refs/heads/master' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
-          type=semver,pattern={{major}}.{{minor}},priority=825,prefix=rc-,suffix=,enable=${{ github.ref != 'refs/heads/master' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
-          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+          type=semver,pattern={{version}},priority=900,prefix=,suffix=.${{ github.run_number }},enable=${{ github.ref == 'refs/heads/main' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
+          type=semver,pattern={{version}},priority=900,prefix=rc-,suffix=.${{ github.run_number }},enable=${{ github.ref != 'refs/heads/main' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
+          type=semver,pattern={{major}}.{{minor}},priority=825,prefix=,suffix=,enable=${{ github.ref == 'refs/heads/main' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
+          type=semver,pattern={{major}}.{{minor}},priority=825,prefix=rc-,suffix=,enable=${{ github.ref != 'refs/heads/main' }},value=${{ steps.nbgv.outputs.SimpleVersion }}
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
         flavor: |
           latest=false
 
     - name: Log into GHCR
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3 # Use a specific stable version
       with:
         registry: ${{ env.GITHUB_REGISTRY }}
         username: ${{ github.repository_owner }}
@@ -70,7 +65,7 @@ jobs:
       if: ${{ github.event_name != 'pull_request' }}
 
     - name: Build and push to GHCR
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v5 # Use a specific stable version
       with:
         context: .
         platforms: linux/amd64,linux/arm64
