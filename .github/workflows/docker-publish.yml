@@ -12,6 +12,7 @@ on:
 
 env:
   IMAGE_NAME: cloudflare-dns-api
+  GITHUB_REGISTRY: ghcr.io
 
 jobs:
 
