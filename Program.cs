@@ -2,6 +2,7 @@ using CloudflareDnsApi;
 using CloudflareDnsApi.Errors;
 using CloudflareDnsApi.Models;
 using CloudflareDnsApi.Services;
+using Microsoft.AspNetCore.Builder;
 using OneOf;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +40,16 @@ var app = builder.Build();
 app.MapOpenApi();
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/")
+    {
+        context.Response.Redirect("/swagger");
+        return;
+    }
+    await next();
+});
 
 app.MapPost("/api/dns", async (DnsUpdateRequest request, CloudflareService cloudflareService) =>
 {
