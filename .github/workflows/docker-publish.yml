@@ -22,7 +22,7 @@ jobs:
       with:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
 
-    - uses: dotnet/nbgv@v3.3.3 # Use a specific stable version
+    - uses: dotnet/nbgv@master
       with:
         setAllVars: true
       id: nbgv
