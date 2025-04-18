@@ -1,9 +1,9 @@
 # Compiled output
-/bin
-/obj
+**/bin/
+**/obj/
 
 # NuGet related files
-packages/
+**/packages/
 *.nupkg
 *.snupkg
 # NuGet.Config, but exclude the 'config' folder if you have specific configuration there
@@ -44,10 +44,10 @@ NuGet.Config
 *.code-workspace
 
 # Build results
-/publish
+**/publish/
 
 # Test results
-/TestResults
+**/TestResults
 /*.trx
 /*.coverage
 /*.coveragexml

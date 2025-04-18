@@ -13,6 +13,7 @@ on:
 env:
   IMAGE_NAME: cloudflare-dns-api
   GITHUB_REGISTRY: ghcr.io
+  DOTNET_SDK_VERSION: 9.0
 
 jobs:
   build:
@@ -27,6 +28,11 @@ jobs:
         setAllVars: true
       id: nbgv
 
+    - name: Set up .NET SDK
+      uses: actions/setup-dotnet@v3 # Use a specific stable version
+      with:
+        dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
+
     - name: Versioning - Update projects
       run: |
         echo ${{ steps.nbgv.outputs.SemVer2 }}
@@ -34,6 +40,15 @@ jobs:
         dotnet tool install -g dotnet-setversion
         echo "Setting version for projects"
         setversion --recursive ${{ steps.nbgv.outputs.SemVer2 }}
+
+    - name: Restore Dependencies
+      run: dotnet restore
+
+    - name: Build Project
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Run Tests
+      run: dotnet test --configuration Release --no-build --verbosity normal
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3 # Use a specific stable version

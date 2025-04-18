@@ -2,15 +2,22 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
-# Copy the project file and restore dependencies
-COPY *.csproj ./
+# Copy the solution file and restore dependencies
+COPY *.sln ./
+COPY CloudflareDnsApi/*.csproj ./CloudflareDnsApi/
+COPY CloudflareDnsApi.Tests/*.csproj ./CloudflareDnsApi.Tests/
+
 RUN dotnet restore
 
 # Copy the rest of the application code
-COPY . ./
+COPY CloudflareDnsApi/. ./CloudflareDnsApi/
+COPY CloudflareDnsApi.Tests/. ./CloudflareDnsApi.Tests/
 
 # Build the application
-RUN dotnet publish -c Release -o out
+RUN dotnet build CloudflareDnsApi/CloudflareDnsApi.csproj -c Release --no-restore
+
+# Publish the main application
+RUN dotnet publish CloudflareDnsApi/CloudflareDnsApi.csproj -c Release -o out --no-build
 
 # Create a runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime

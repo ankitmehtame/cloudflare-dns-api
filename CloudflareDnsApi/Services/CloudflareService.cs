@@ -16,6 +16,7 @@ public class CloudflareService
 
     private const string API_TOKEN_KEY = "CLOUDFLARE_API_TOKEN";
     private const string ZONE_ID_KEY = "CLOUDFLARE_ZONE_ID";
+    private readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions().ConfigureOptions();
 
     public CloudflareService(IHttpClientFactory httpClientFactory, ILogger<CloudflareService> logger)
     {
@@ -53,7 +54,9 @@ public class CloudflareService
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            var listResponse = JsonSerializer.Deserialize<CloudflareListDnsRecordsResponse>(responseContent);
+            _logger.LogDebug("Response: {responseStatus} {responseContent}", (int)response.StatusCode, responseContent);
+            var listResponse = JsonSerializer.Deserialize<CloudflareListDnsRecordsResponse>(responseContent, jsonOptions);
+            _logger.LogDebug("Parsed - {parsedResponse}", listResponse);
 
             if (listResponse?.Result?.Length > 0)
             {
@@ -74,7 +77,8 @@ public class CloudflareService
                     return new CloudflareApiError((int)getResponse.StatusCode, errorContent);
                 }
                 var getResponseContent = await getResponse.Content.ReadAsStringAsync();
-                var getRecordResponse = JsonSerializer.Deserialize<CloudflareGetDnsRecordResponse>(getResponseContent);
+                _logger.LogDebug("Response: {responseStatus} {responseContent}", (int)getResponse.StatusCode, getResponseContent);
+                var getRecordResponse = JsonSerializer.Deserialize<CloudflareGetDnsRecordResponse>(getResponseContent, jsonOptions);
 
                 var jsonResponse = getRecordResponse?.Result?.Content;
                 if (jsonResponse == null)
@@ -95,31 +99,32 @@ public class CloudflareService
         }
     }
 
-    public async Task<OneOf<bool, CloudflareApiError, DnsRecordNotFoundError>> UpdateDnsRecordAsync(string recordName, string recordType, string content)
+    public async Task<OneOf<bool, CloudflareApiError, DnsRecordNotFoundError>> UpdateDnsRecordAsync(string recordName, DnsRecordType recordType, string content)
     {
         try
         {
             // Step 1: List DNS records to find the one with the matching name and type
             var listRecordsUrl = $"https://api.cloudflare.com/client/v4/zones/{_zoneId}/dns_records";
-            var listResponse = await _httpClient.GetAsync($"{listRecordsUrl}?name={recordName}&type={recordType}");
+            var listResponse = await _httpClient.GetAsync($"{listRecordsUrl}?name={recordName}");
             if (!listResponse.IsSuccessStatusCode)
             {
                 var errorContent = await listResponse.Content.ReadAsStringAsync();
                 return new CloudflareApiError((int)listResponse.StatusCode, errorContent);
             }
             var listResponseContent = await listResponse.Content.ReadAsStringAsync();
-            var listResult = JsonSerializer.Deserialize<CloudflareListDnsRecordsResponse>(listResponseContent);
+            _logger.LogDebug("Response: {responseStatus} {responseContent}", (int)listResponse.StatusCode, listResponseContent);
+            var listResult = JsonSerializer.Deserialize<CloudflareListDnsRecordsResponse>(listResponseContent, jsonOptions);
 
             if (listResult?.Result?.Length > 0)
             {
                 // Assuming the first record with the matching name and type is the one we want to update
-                var recordId = listResult.Result[0].Id;
+                var recordId = listResult.Result.FirstOrDefault(x => x.Type == recordType)?.Id ?? listResult.Result[0].Id;
 
                 // Step 2: Update the DNS record using its ID
                 var updateRecordUrl = $"https://api.cloudflare.com/client/v4/zones/{_zoneId}/dns_records/{recordId}";
                 var payload = new
                 {
-                    type = recordType.ToUpper(),
+                    type = recordType.ToString().ToUpperInvariant(),
                     name = recordName,
                     content = content,
                     ttl = 60 // You can adjust the TTL as needed
@@ -133,7 +138,8 @@ public class CloudflareService
                     return new CloudflareApiError((int)updateResponse.StatusCode, errorContent);
                 }
                 var updateResponseContent = await updateResponse.Content.ReadAsStringAsync();
-                var updateResult = JsonSerializer.Deserialize<CloudflareUpdateDnsRecordResponse>(updateResponseContent);
+                _logger.LogDebug("Response: {responseStatus} {responseContent}", (int)updateResponse.StatusCode, updateResponseContent);
+                var updateResult = JsonSerializer.Deserialize<CloudflareUpdateDnsRecordResponse>(updateResponseContent, jsonOptions);
 
                 return updateResult?.Success ?? false;
             }

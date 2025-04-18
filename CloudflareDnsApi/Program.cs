@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using CloudflareDnsApi;
 using CloudflareDnsApi.Models;
 using CloudflareDnsApi.Services;
@@ -6,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<CloudflareService>();
+
+builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.ConfigureOptions());
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -60,9 +64,7 @@ app.MapPost("/api/dns", async (DnsUpdateRequest request, CloudflareService cloud
         return Results.BadRequest("Invalid DNS record type. Only 'A' or 'CNAME' are supported.");
     }
 
-    var typeString = request.Type.ToString().ToUpperInvariant();
-
-    var result = await cloudflareService.UpdateDnsRecordAsync(request.Name, typeString, request.Content);
+    var result = await cloudflareService.UpdateDnsRecordAsync(request.Name, request.Type, request.Content);
 
     return result.Match(
         success => success ? Results.Ok("DNS record updated successfully.") : Results.NotFound($"DNS record with name '{request.Name}' and type '{request.Type}' not found or update failed."),
