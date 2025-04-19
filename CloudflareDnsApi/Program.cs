@@ -1,8 +1,7 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using CloudflareDnsApi;
 using CloudflareDnsApi.Models;
 using CloudflareDnsApi.Services;
+using CloudflareDnsApi.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +32,7 @@ builder.Services.AddSwaggerGen(c =>
             Url = new Uri("https://opensource.org/licenses/MIT")
         }
     });
+    c.SchemaFilter<StringEnumSchemaFilter>();
 });
 
 var app = builder.Build();
