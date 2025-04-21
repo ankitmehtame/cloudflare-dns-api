@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<CloudflareService>();
+builder.Services.AddCors();
 
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.ConfigureOptions());
 
@@ -41,6 +42,11 @@ var app = builder.Build();
 app.MapOpenApi();
 app.UseSwagger();
 app.UseSwaggerUI();
+app.UseCors(b => b
+    .AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+);
 
 app.Use(async (context, next) =>
 {
