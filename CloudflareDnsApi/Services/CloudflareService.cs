@@ -122,7 +122,7 @@ public class CloudflareService
 
                 if (record.Type == recordType && record.Name == recordName && record.Content == content)
                 {
-                    _logger.LogWarning("DNS record {record} and {recordType} is already up-to-date", recordName, recordType);
+                    _logger.LogInformation("DNS record {record} and {recordType} is already up-to-date", recordName, recordType);
                     return CloudflareDnsUpdate.UpToDate;
                 }
 
