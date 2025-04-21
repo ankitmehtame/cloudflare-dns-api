@@ -99,7 +99,7 @@ public class CloudflareService
         }
     }
 
-    public async Task<OneOf<bool, CloudflareApiError, DnsRecordNotFoundError>> UpdateDnsRecordAsync(string recordName, DnsRecordType recordType, string content)
+    public async Task<OneOf<CloudflareDnsUpdate, CloudflareApiError, DnsRecordNotFoundError>> UpdateDnsRecordAsync(string recordName, DnsRecordType recordType, string content)
     {
         try
         {
@@ -118,7 +118,15 @@ public class CloudflareService
             if (listResult?.Result?.Length > 0)
             {
                 // Assuming the first record with the matching name and type is the one we want to update
-                var recordId = listResult.Result.FirstOrDefault(x => x.Type == recordType)?.Id ?? listResult.Result[0].Id;
+                var record = listResult.Result.FirstOrDefault(x => x.Type == recordType) ?? listResult.Result[0];
+
+                if (record.Type == recordType && record.Name == recordName && record.Content == content)
+                {
+                    _logger.LogWarning("DNS record {record} and {recordType} is already up-to-date", recordName, recordType);
+                    return CloudflareDnsUpdate.UpToDate;
+                }
+
+                var recordId = record.Id;
 
                 // Step 2: Update the DNS record using its ID
                 var updateRecordUrl = $"https://api.cloudflare.com/client/v4/zones/{_zoneId}/dns_records/{recordId}";
@@ -141,7 +149,7 @@ public class CloudflareService
                 _logger.LogDebug("Response: {responseStatus} {responseContent}", (int)updateResponse.StatusCode, updateResponseContent);
                 var updateResult = JsonSerializer.Deserialize<CloudflareUpdateDnsRecordResponse>(updateResponseContent, jsonOptions);
 
-                return updateResult?.Success ?? false;
+                return updateResult?.Success ?? false ? CloudflareDnsUpdate.Updated : CloudflareDnsUpdate.Unsuccessful;
             }
             _logger.LogWarning("Unable to find DNS record {record} and {recordType} to update", recordName, recordType);
 
@@ -163,3 +171,5 @@ public record class CloudflareGetDnsRecordResponse(CloudflareDnsRecordResult Res
 public record class CloudflareDnsRecordResult(string Id, DnsRecordType Type, string Name, string Content);
 
 public record class CloudflareUpdateDnsRecordResponse(bool Success);
+
+public enum CloudflareDnsUpdate { Updated, UpToDate, Unsuccessful };

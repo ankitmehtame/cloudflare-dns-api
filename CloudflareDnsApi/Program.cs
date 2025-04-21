@@ -73,7 +73,13 @@ app.MapPost("/api/dns", async (DnsUpdateRequest request, CloudflareService cloud
     var result = await cloudflareService.UpdateDnsRecordAsync(request.Name, request.Type, request.Content);
 
     return result.Match(
-        success => success ? Results.Ok("DNS record updated successfully.") : Results.NotFound($"DNS record with name '{request.Name}' and type '{request.Type}' not found or update failed."),
+        success => success switch
+                    {
+                        CloudflareDnsUpdate.Updated => Results.Ok("DNS record updated successfully."),
+                        CloudflareDnsUpdate.Unsuccessful => Results.NotFound($"DNS record with name '{request.Name}' and type '{request.Type}' not found or update failed."),
+                        CloudflareDnsUpdate.UpToDate => Results.Ok("DNS record already up-to-date"),
+                        _ => throw new IndexOutOfRangeException($"Unexpected {success.GetType().Name} value {success}"),
+                    },
         apiError => Results.StatusCode(apiError.StatusCode), // Return appropriate status code based on Cloudflare API error
         notFound => Results.NotFound($"DNS record with name '{request.Name}' not found.")
     );
