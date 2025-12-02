@@ -1,3 +1,6 @@
+[![Build](https://github.com/ankitmehtame/cloudflare-dns-api/actions/workflows/docker-publish.yml/badge.svg?branch=main)](https://github.com/ankitmehtame/cloudflare-dns-api/actions/workflows/docker-publish.yml)
+![GHCR Image Version (latest)](https://ghcr-badge.egpl.dev/ankitmehtame/cloudflare-dns-api/latest_tag?color=%2344cc11&ignore=&label=version&trim=)
+
 # Cloudflare DNS API Wrapper
 
 A simple REST API that acts as a wrapper for the Cloudflare DNS API to update `A` or `CNAME` DNS records.
