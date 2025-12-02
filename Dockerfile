@@ -1,5 +1,5 @@
 # Use the official .NET SDK image as a base image
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
 
 # Copy the solution file, all project files (*.csproj), and all source code
@@ -20,7 +20,7 @@ RUN dotnet build CloudflareDnsApi.sln -c Release
 RUN dotnet publish CloudflareDnsApi/CloudflareDnsApi.csproj -c Release -o out --no-build
 
 # Create a runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/out ./
 ENTRYPOINT ["dotnet", "CloudflareDnsApi.dll"]
