@@ -1,6 +1,6 @@
 # Cloudflare DNS API Wrapper
 
-A simple .NET 9 minimal web API that acts as a wrapper for the Cloudflare DNS API to update `A` or `CNAME` DNS records.
+A simple REST API that acts as a wrapper for the Cloudflare DNS API to update `A` or `CNAME` DNS records.
 
 ## Features
 

@@ -1,13 +1,13 @@
 using CloudflareDnsApi;
 using CloudflareDnsApi.Models;
 using CloudflareDnsApi.Services;
-using CloudflareDnsApi.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<CloudflareService>();
 builder.Services.AddCors();
+builder.Services.AddControllers().AddJsonOptions(o => o.JsonSerializerOptions.ConfigureOptions());
 
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.ConfigureOptions());
 
@@ -18,22 +18,21 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
     {
         Title = "Cloudflare DNS API",
         Version = VersionUtils.AssemblyVersion,
         Description = $"v{VersionUtils.InfoVersion} A simple API to manage Cloudflare DNS entries.",
-        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        Contact = new Microsoft.OpenApi.OpenApiContact
         {
             Name = "Ankit",
         },
-        License = new Microsoft.OpenApi.Models.OpenApiLicense
+        License = new Microsoft.OpenApi.OpenApiLicense
         {
             Name = "MIT License",
             Url = new Uri("https://opensource.org/licenses/MIT")
         }
     });
-    c.SchemaFilter<StringEnumSchemaFilter>();
 });
 
 var app = builder.Build();
@@ -84,8 +83,7 @@ app.MapPost("/api/dns", async (DnsUpdateRequest request, CloudflareService cloud
         notFound => Results.NotFound($"DNS record with name '{request.Name}' not found.")
     );
 })
-.WithName("UpdateDnsRecord")
-.WithOpenApi();
+.WithName("UpdateDnsRecord");
 
 // Define the GET endpoint for retrieving DNS records
 app.MapGet("/api/dns/{name}", async (string name, CloudflareService cloudflareService) =>
@@ -103,8 +101,7 @@ app.MapGet("/api/dns/{name}", async (string name, CloudflareService cloudflareSe
         notFound => Results.NotFound($"DNS record with name '{name}' not found.")
     );
 })
-.WithName("GetDnsRecord")
-.WithOpenApi();
+.WithName("GetDnsRecord");
 
 var logger = app.Services.GetService<ILogger<Program>>() ?? throw new InvalidOperationException("Logger is not found");
 logger.LogInformation("Info version is {InfoVersion}", VersionUtils.InfoVersion);
